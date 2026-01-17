@@ -1,0 +1,33 @@
+# Yocto build output
+build/tmp/
+build/cache/
+build/downloads/
+build/sstate-cache/
+cache/
+
+# BitBake
+*.log
+*.pid
+*.sock
+*.lock
+
+# Kernel / DT build artifacts
+*.dtb
+*.dtbo
+*.pp
+*.cmd
+*.o
+*.a
+*.so
+*.ko
+Module.symvers
+modules.order
+
+# Editor / OS junk
+*.swp
+*.swo
+*.bak
+*.orig
+.DS_Store
+.vscode/
+.idea/
