@@ -4,7 +4,9 @@
 /dts-v1/;
 /plugin/;
 
+#define CAM0_RST	TEGRA234_MAIN_GPIO(H, 3)
 #define CAM0_PWDN	TEGRA234_MAIN_GPIO(H, 6)
+#define CAM1_PWDN	TEGRA234_MAIN_GPIO(AC, 0)
 #define CAM_I2C_MUX 	TEGRA234_AON_GPIO(CC, 3)
 
 #include <dt-bindings/tegra234-p3767-0000-common.h>
@@ -26,7 +28,7 @@
 					vi_port0: port@0 {
 						reg = <0>;
 						rbpcv2_imx219_vi_in0: endpoint {
-							port-index = <1>;
+							port-index = <0>;
 							bus-width = <2>;
 							remote-endpoint = <&rbpcv2_imx219_csi_out0>;
 						};
@@ -62,7 +64,7 @@
 				* isp_bw_margin_pct = <>;
 				* Isp bandwidth margin in percentage
 				*/
-				num_csi_lanes = <4>;
+				num_csi_lanes = <2>;
 				max_lane_speed = <1500000>;
 				min_bits_per_pixel = <10>;
 				vi_peak_byte_per_pixel = <2>;
@@ -87,10 +89,6 @@
 							pcl_id = "v4l2_sensor";
 							sysfs-device-tree = "/sys/firmware/devicetree/base/bus@0/cam_i2cmux/i2c@0/rbpcv2_imx219_a@10";
 						};
-						cam_module0_drivernode1: drivernode1 {
-							pcl_id = "v4l2_lens";
-							sysfs-device-tree = "/sys/firmware/devicetree/base/bus@0/lens_imx219@RBPCV2";
-						};
 					};
 				};
 			};
@@ -108,8 +106,9 @@
 								csi_chan0_port0: port@0 {
 									reg = <0>;
 									rbpcv2_imx219_csi_in0: endpoint@0 {
-										port-index = <1>;
+										port-index = <0>;
 										bus-width = <2>;
+                                        num-lanes = <2>;
 										remote-endpoint = <&rbpcv2_imx219_out0>;
 									};
 								};
@@ -136,7 +135,7 @@
 						#address-cells = <1>;
 						#size-cells = <0>;
 						rbpcv2_imx219_a@10 {
-							compatible = "nvidia,imx219", "sony,imx219";
+							compatible = "sony,imx219";
 							/* I2C device address */
 							reg = <0x10>;
 							/* V4L2 device node location */
@@ -146,6 +145,7 @@
 							physical_h = "2.760";
 							sensor_model = "imx219";
 							use_sensor_mode_id = "true";
+							reset-gpios = <&gpio CAM0_PWDN GPIO_ACTIVE_HIGH>;
 							/**
 							* ==== Modes ====
 							* A modeX node is required to support v4l2 driver
@@ -153,7 +153,7 @@
 							*
 							* == Signal properties ==
 							*
-							* phy_mode = "";
+								* phy_mode = "";
 							* PHY mode used by the MIPI lanes for this device
 							*
 							* tegra_sinterface = "";
@@ -230,7 +230,7 @@
 							mode0 { /* IMX219_MODE_3280x2464_21FPS */
 								mclk_khz = "24000";
 								num_lanes = "2";
-								tegra_sinterface = "serial_b";
+								tegra_sinterface = "serial_a";
 								lane_polarity = "6";
 								phy_mode = "DPHY";
 								discontinuous_clk = "yes";
@@ -268,7 +268,7 @@
 							mode1 { /* IMX219_MODE_3280x1848_28FPS */
 								mclk_khz = "24000";
 								num_lanes = "2";
-								tegra_sinterface = "serial_b";
+								tegra_sinterface = "serial_a";
 								lane_polarity = "6";
 								phy_mode = "DPHY";
 								discontinuous_clk = "yes";
@@ -306,7 +306,7 @@
 							mode2 { /* IMX219_MODE_1920x1080_30FPS */
 								mclk_khz = "24000";
 								num_lanes = "2";
-								tegra_sinterface = "serial_b";
+								tegra_sinterface = "serial_a";
 								lane_polarity = "6";
 								phy_mode = "DPHY";
 								discontinuous_clk = "yes";
@@ -344,7 +344,7 @@
 							mode3 { /* IMX219_MODE_1640x1232_30FPS */
 								mclk_khz = "24000";
 								num_lanes = "2";
-								tegra_sinterface = "serial_b";
+								tegra_sinterface = "serial_a";
 								lane_polarity = "6";
 								phy_mode = "DPHY";
 								discontinuous_clk = "yes";
@@ -382,7 +382,7 @@
 							mode4 { /* IMX219_MODE_1280x720_60FPS */
 								mclk_khz = "24000";
 								num_lanes = "2";
-								tegra_sinterface = "serial_b";
+								tegra_sinterface = "serial_a";
 								lane_polarity = "6";
 								phy_mode = "DPHY";
 								discontinuous_clk = "yes";
@@ -424,7 +424,7 @@
 									reg = <0>;
 									rbpcv2_imx219_out0: endpoint {
 										status = "okay";
-										port-index = <1>;
+										port-index = <0>;
 										bus-width = <2>;
 										remote-endpoint = <&rbpcv2_imx219_csi_in0>;
 									};
@@ -433,17 +433,11 @@
 						};
 					};
 					i2c@1 {
-						rbpcv2_imx219_c@10 {
-							status = "disabled";
-						};
+						reg = <0x01>;
+						#address-cells = <0x01>;
+						#size-cells = <0x00>;
+						status = "disabled";
 					};
-				};
-				lens_imx219@RBPCV2 {
-					min_focus_distance = "0.0";
-					hyper_focal = "0.0";
-					focal_length = "3.04";
-					f_number = "2.0";
-					aperture = "0.0";
 				};
 			};
 		};

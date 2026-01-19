@@ -10,7 +10,7 @@ COMPATIBLE_MACHINE = "(tegra)"
 DEPENDS += "nvidia-kernel-oot dtc-native"
 
 SRC_URI = "\
-    file://tegra234-p3768-0000-cam0.dts \
+    file://tegra234-p3768-0000-cam0-imx219.dts \
 "
 
 DT_INCLUDE = " \
@@ -44,8 +44,8 @@ devicetree_do_compile:append() {
     b = d.getVar("B")
     rootpath = d.getVar("RECIPE_SYSROOT")
 
-    base = os.path.join(rootpath, "boot/devicetree/tegra234-p3737-0000+p3701-0005-nv.dtb")
-    overlay = os.path.join(b, "tegra234-p3768-0000-cam0.dtbo")
+    base = os.path.join(rootpath, "boot/devicetree/tegra234-p3768-0000+p3767-0005-nv.dtb")
+    overlay = os.path.join(rootpath, "boot/devicetree/tegra234-p3767-camera-p3768-imx219-A.dtbo")
     result = os.path.join(b, "tegra234-p3768-0000+p3767-0005-perception.dtb")
 
     bb.note("Applying DT overlay via fdtoverlay")
