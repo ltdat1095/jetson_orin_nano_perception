@@ -1,0 +1,13 @@
+[submodule "meta-ros"]
+	path = meta-ros
+	url = https://github.com/ros/meta-ros
+	branch = scarthgap
+[submodule "meta-mender-community"]
+	path = meta-mender-community
+	url = https://github.com/mendersoftware/meta-mender-community.git
+[submodule "meta-mender"]
+	path = meta-mender
+	url = https://github.com/mendersoftware/meta-mender.git
+[submodule "meta-openembedded"]
+	path = meta-openembedded
+	url = git://git.openembedded.org/meta-openembedded

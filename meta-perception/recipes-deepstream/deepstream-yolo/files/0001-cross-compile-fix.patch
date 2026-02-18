@@ -1,0 +1,27 @@
+--- a/nvdsinfer_custom_impl_Yolo/Makefile	2026-01-22 11:21:21.723234294 +0700
++++ b/nvdsinfer_custom_impl_Yolo/Makefile	2026-01-22 11:22:28.781292407 +0700
+@@ -39,11 +39,14 @@
+ endif
+ 
+ CC:= g++
+-NVCC:=/usr/local/cuda-$(CUDA_VER)/bin/nvcc
++NVCC ?= /usr/local/cuda-$(CUDA_VER)/bin/nvcc
+ 
+ CFLAGS:= -Wall -std=c++11 -shared -fPIC -Wno-error=deprecated-declarations
+ CFLAGS+= -I/opt/nvidia/deepstream/deepstream/sources/includes -I/usr/local/cuda-$(CUDA_VER)/include
+ 
++CUDA_INC ?= -I/usr/local/cuda-$(CUDA_VER)/include
++DS_INC ?= -I/opt/nvidia/deepstream/deepstream/sources/includes
++
+ ifeq ($(OPENCV), 1)
+ 	COMMON+= -DOPENCV
+ 	CFLAGS+= $(shell pkg-config --cflags opencv4 2> /dev/null || pkg-config --cflags opencv)
+@@ -54,7 +57,7 @@
+ 	COMMON+= -DGRAPH
+ endif
+ 
+-CUFLAGS:= -I/opt/nvidia/deepstream/deepstream/sources/includes -I/usr/local/cuda-$(CUDA_VER)/include
++CUFLAGS ?= $(DS_INC) $(CUDA_INC)
+ 
+ ifeq ($(shell ldconfig -p | grep -q libnvparsers && echo 1 || echo 0), 1)
+ 	LIBS+= -lnvparsers

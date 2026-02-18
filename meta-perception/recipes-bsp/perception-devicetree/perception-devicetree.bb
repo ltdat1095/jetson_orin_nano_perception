@@ -42,17 +42,60 @@ def expand_includes(varname, d):
 devicetree_do_compile:append() {
     import subprocess
     b = d.getVar("B")
+    s = d.getVar("S")
     rootpath = d.getVar("RECIPE_SYSROOT")
 
-    base = os.path.join(rootpath, "boot/devicetree/tegra234-p3768-0000+p3767-0005-nv.dtb")
-    overlay = os.path.join(rootpath, "boot/devicetree/tegra234-p3767-camera-p3768-imx219-A.dtbo")
-    result = os.path.join(b, "tegra234-p3768-0000+p3767-0005-perception.dtb")
+    #base = os.path.join(rootpath, "boot/devicetree/tegra234-p3768-0000+p3767-0005-nv.dtb")
+    # overlay = os.path.join(rootpath, "boot/devicetree/tegra234-p3767-camera-p3768-imx219-A.dtbo")
+    #overlay_dts = os.path.join(s,"tegra234-p3768-0000-cam0-imx219.dts")
+    #overlay_dtbo = os.path.join(b,"tegra234-p3768-0000-cam0-imx219.dtbo")
+    #result = os.path.join(b, "tegra234-p3768-0000+p3767-0005-perception.dtb")
+
+
+    includes = expand_includes("DT_INCLUDE", d)
+    base = os.path.join(rootpath,
+        "boot/devicetree/tegra234-p3768-0000+p3767-0005-nv.dtb")
+
+    overlay_dts = os.path.join(
+        s, "tegra234-p3768-0000-cam0-imx219.dts")
+
+    preprocessed = os.path.join(
+        b, "overlay.pp.dts")
+
+    overlay_dtbo = os.path.join(
+        b, "tegra234-p3768-0000-cam0-imx219.dtbo")
+
+    result = os.path.join(
+        b, "tegra234-p3768-0000+p3767-0005-perception.dtb")
+
+    bb.note("Preprocessing overlay with cpp")
+
+    bb.note("Preprocessing overlay with cpp")
+    subprocess.check_call([
+        "cpp",
+        "-nostdinc",
+        "-undef",
+        "-x", "assembler-with-cpp",
+        *sum([["-I", i] for i in includes], []),
+        overlay_dts,
+        preprocessed
+    ])
+
+    bb.note("Compiling overlay with dtc")
+    subprocess.check_call([
+        "dtc",
+        "-@",
+        "-I", "dts",
+        "-O", "dtb",
+        "-o", overlay_dtbo,
+        preprocessed
+    ])
 
     bb.note("Applying DT overlay via fdtoverlay")
     subprocess.check_call([
         "fdtoverlay",
         "-i", base,
         "-o", result,
-        overlay
+        overlay_dtbo
     ])
 }
