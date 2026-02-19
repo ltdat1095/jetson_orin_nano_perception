@@ -11,3 +11,15 @@
 [submodule "meta-openembedded"]
 	path = meta-openembedded
 	url = git://git.openembedded.org/meta-openembedded
+[submodule "meta-tegra-community"]
+	path = meta-tegra-community
+	url = https://github.com/OE4T/meta-tegra-community.git
+[submodule "meta-tegra"]
+	path = meta-tegra
+	url = https://github.com/OE4T/meta-tegra.git
+[submodule "meta-virtualization"]
+	path = meta-virtualization
+	url = https://git.yoctoproject.org/meta-virtualization.git
+[submodule "poky"]
+	path = poky
+	url = https://git.yoctoproject.org/git/poky
