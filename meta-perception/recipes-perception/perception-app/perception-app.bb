@@ -3,13 +3,29 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = "gitsm://github.com/ltdat1095/jetson_perception;protocol=https;branch=master"
-SRCREV = "${AUTOREV}"
+SRCREV = "296d0fd6c701711b7cd54cfff02afbafde212354"
 
 S = "${WORKDIR}/git"
 
-# Define dependency lists according to standard ROS superflore structure
-ROS_BUILD_DEPENDS = " \
+DEPENDS = " \
+    python3-colcon-common-extensions-native \
+    python3-colcon-ros-native \
+    python3-vcstool-native \
+    python3-setuptools-native \
+    python3-numpy-native \
+    python3-numpy \
+    git-native \
+    cmake-native \
+    pkgconfig-native \
+    ament-cmake \
+    ament-cmake-native \
+    ament-package-native \
+    rosidl-default-generators-native \
+    rosidl-default-generators \
+    rosidl-default-runtime \
+    rosidl-adapter-native \
     rclcpp \
+    rmw-implementation \
     sensor-msgs \
     std-msgs \
     builtin-interfaces \
@@ -18,16 +34,6 @@ ROS_BUILD_DEPENDS = " \
     cuda-cudart \
     tegra-mmapi \
     deepstream-7.1 \
-    fastcdr \
-    rcutils \
-    rcpputils \
-    libyaml-vendor \
-    rmw-implementation \
-    rmw-implementation-cmake \
-    rmw-fastrtps-cpp \
-    python3-numpy \
-    ament-cmake \
-    rosidl-default-generators \
 "
 
 ROS_BUILDTOOL_DEPENDS = " \
@@ -45,93 +51,49 @@ ROS_BUILDTOOL_DEPENDS = " \
     cmake-native \
 "
 
-ROS_EXPORT_DEPENDS = " \
-    rclcpp \
-    sensor-msgs \
-    std-msgs \
-    builtin-interfaces \
-"
-
-ROS_BUILDTOOL_EXPORT_DEPENDS = ""
-
-ROS_EXEC_DEPENDS = " \
-    rosidl-default-runtime \
-    rclcpp \
-    sensor-msgs \
-    std-msgs \
-    builtin-interfaces \
-"
-
-ROS_TEST_DEPENDS = ""
-
-DEPENDS = "${ROS_BUILD_DEPENDS} ${ROS_BUILDTOOL_DEPENDS}"
-DEPENDS += "${ROS_EXPORT_DEPENDS} ${ROS_BUILDTOOL_EXPORT_DEPENDS}"
-RDEPENDS:${PN} += "${ROS_EXEC_DEPENDS}"
-
-ROS_BUILD_TYPE = "ament_cmake"
-
-inherit ros_distro_humble
-inherit ros_superflore_generated
-inherit ros_${ROS_BUILD_TYPE}
-inherit python3native
-
-# Disable default do_configure as there is no root CMakeLists.txt
+# This repo has multiple ROS 2 packages and no single top-level CMake project.
 do_configure() {
     :
 }
 
-# Use manual colcon build since this is a workspace-like structure
 do_compile() {
-    # Clean previous build to avoid caching issues
     rm -rf ${S}/build ${S}/install ${S}/log
-    
-    export COLCON_HOME=${WORKDIR}/colcon
-    
-    # Explicitly define ROS prefix 
-    export ROS_PREFIX="/opt/ros/${ROS_DISTRO}"
-    
-    # Export standard ROS build environment variables
-    # We include both standard prefix (/usr) and ROS_PREFIX path
-    export AMENT_PREFIX_PATH=${STAGING_DIR_TARGET}${prefix}:${STAGING_DIR_NATIVE}${prefix}:${STAGING_DIR_TARGET}${ROS_PREFIX}:${STAGING_DIR_NATIVE}${ROS_PREFIX}
-    export CMAKE_PREFIX_PATH=${STAGING_DIR_TARGET}${prefix}:${STAGING_DIR_NATIVE}${prefix}:${STAGING_DIR_TARGET}${ROS_PREFIX}:${STAGING_DIR_NATIVE}${ROS_PREFIX}
-    
-    # Python path needs to include ROS Python packages AND target python configurations
-    # We prepend STAGING_LIBDIR/${PYTHON_DIR} to find _sysconfigdata for the target
-    export PYTHONPATH=${STAGING_LIBDIR}/${PYTHON_DIR}:${STAGING_DIR_NATIVE}${libdir}/${PYTHON_DIR}/site-packages:${STAGING_DIR_NATIVE}${ROS_PREFIX}/lib/${PYTHON_DIR}/site-packages:${PYTHONPATH}
-    
-    # Force python to use target configuration for extensions
-    export _PYTHON_SYSCONFIGDATA_NAME="_sysconfigdata__linux_${TARGET_ARCH}-linux-gnu" 
-    export _PYTHON_HOST_PLATFORM="linux-${TARGET_ARCH}"
 
-    # Export SDKTARGETSYSROOT for CMake to find DeepStream/CUDA properly
+    export COLCON_HOME=${WORKDIR}/colcon
+    # Avoid inheriting host/default colcon settings (e.g. symlink-install)
+    # that produce non-relocatable install trees in Yocto packages.
+    export COLCON_DEFAULTS_FILE=/dev/null
+    export ROS_NATIVE_PREFIX=${STAGING_DIR_NATIVE}/opt/ros/humble
+
+    export AMENT_PREFIX_PATH="${STAGING_DIR_TARGET}${prefix}:${STAGING_DIR_NATIVE}${prefix}:${STAGING_DIR_TARGET}/opt/ros/humble:${ROS_NATIVE_PREFIX}"
+    export CMAKE_PREFIX_PATH="${AMENT_PREFIX_PATH}"
+    export PYTHONPATH="${STAGING_DIR_NATIVE}${libdir}/${PYTHON_DIR}/site-packages:${ROS_NATIVE_PREFIX}/lib/${PYTHON_DIR}/site-packages:${PYTHONPATH}"
     export SDKTARGETSYSROOT=${STAGING_DIR_TARGET}
-    
-    # Explicitly find rmw_implementation if needed
-    export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    export PKG_CONFIG="${STAGING_BINDIR_NATIVE}/pkg-config"
 
     colcon build \
-        --merge-install \
         --build-base ${S}/build \
         --install-base ${S}/install \
-        --paths ${S}/src/live_sensors_node ${S}/src/interfaces \
+        --base-paths ${S}/src \
+        --packages-select perception_interfaces live_sensors_node inference_node \
         --event-handlers console_direct+ \
         --cmake-args \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_NO_SYSTEM_FROM_IMPORTED=1 \
-            -DCMAKE_toolchain_file=${WORKDIR}/toolchain.cmake \
+            -DBUILD_TESTING=OFF \
+            -DCMAKE_TOOLCHAIN_FILE=${WORKDIR}/toolchain.cmake \
             -DCMAKE_SYSROOT=${STAGING_DIR_TARGET} \
+            -DPYTHON_SOABI=cpython-312-aarch64-linux-gnu \
+            -DPython3_SOABI=cpython-312-aarch64-linux-gnu \
             -DCMAKE_FIND_ROOT_PATH="${STAGING_DIR_TARGET};${STAGING_DIR_NATIVE}" \
-            -DRMW_IMPLEMENTATION=rmw_fastrtps_cpp \
-            ${EXTRA_OECMAKE}
+            -Wno-dev
 }
 
-# Override do_install to copy the colcon build output
 do_install() {
     install -d ${D}${prefix}/perception-app
-    cp -r ${S}/install/* ${D}${prefix}/perception-app/
+    # Copy as real files, not symlinks, so rosidl-generated Python modules
+    # and type-support libs are present in the target rootfs.
+    cp -rL --no-preserve=ownership ${S}/install/. ${D}${prefix}/perception-app/
 }
 
 FILES:${PN} = "${prefix}/perception-app"
-
-# Ensure we don't pick up host stuff
 INSANE_SKIP:${PN} += "already-stripped"

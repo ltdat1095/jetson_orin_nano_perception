@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Wed, 25 Mar 2026 21:30:00 +0700
+Subject: [PATCH] Only load CPM when a dependency must be fetched
+
+In Yocto builds, network access during do_configure is not available.
+rosx_introspection unconditionally includes cmake/CPM.cmake, which
+immediately downloads CPM from GitHub even in the ROS 2 case where all
+required dependencies are already provided by the sysroot.
+
+Delay including CPM until the non-ROS2 fallback or the RapidJSON fallback
+actually need it.
+---
+ CMakeLists.txt | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ce8e23a..4f6c2a1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -5,7 +5,6 @@ project(rosx_introspection LANGUAGES CXX VERSION 1.0.2)
+ 
+ option(CMAKE_POSITION_INDEPENDENT_CODE "Set -fPIC" ON)
+ 
+-include(cmake/CPM.cmake)
+ 
+ find_package(ament_cmake QUIET)
+ 
+@@ -53,6 +52,7 @@ if(USING_ROS2)
+ else()
+     message(STATUS "Downloading FastCDR with CPM and building as static library")
+     # Override Fast-CDR option: compile as static lib
++    include(cmake/CPM.cmake)
+     # set(BUILD_SHARED_LIBS OFF CACHE BOOL "Create static libraries by default")
+ 
+     CPMAddPackage(NAME fastcdr
+@@ -65,6 +65,10 @@ find_package(RapidJSON QUIET)
+ 
+ if(NOT RapidJSON_FOUND)
+     message(STATUS "Downloading RapidJSON with CPM")    
++    if(NOT COMMAND CPMAddPackage)
++        include(cmake/CPM.cmake)
++    endif()
++
+     CPMAddPackage(NAME rapidjson
+         GIT_TAG v1.1.0
+         GITHUB_REPOSITORY "Tencent/rapidjson"
+-- 
+2.43.0

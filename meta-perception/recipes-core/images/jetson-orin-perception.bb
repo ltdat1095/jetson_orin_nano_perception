@@ -44,13 +44,16 @@ IMAGE_INSTALL:append = " \
 IMAGE_INSTALL:append = " \
     packagegroup-ros-debs \
     perception-app \
+    ros2-perception-interface \
 "
 
 # --- Streaming pipe line---
 IMAGE_INSTALL:append = " \
     gstreamer1.0-plugins-ugly \
     gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-bad-webrtc \
     gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-good-vpx \
     gstreamer1.0-plugins-nvarguscamerasrc \
     gstreamer1.0-plugins-nvvidconv \
     tegra-libraries-multimedia \
@@ -59,6 +62,7 @@ IMAGE_INSTALL:append = " \
     deepstream-7.1 \
     ffmpeg \
     gstreamer1.0-libav \
+    foxglove-bridge \
 "
 
 # --- Streaming debug---
